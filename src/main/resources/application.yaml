@@ -1,0 +1,26 @@
+spring:
+  datasource:
+    url: jdbc:mysql://localhost:3306/weather-analyzer
+    password: mysql
+    username: root
+  jpa:
+    database-platform: org.hibernate.dialect.MySQL8InnoDBDialect
+    generate-ddl: false
+    show-sql: true
+    hibernate:
+      ddl-auto: update
+    properties:
+      hibernate:
+        globally_quoted_indentifiers: true
+        dialect: org.hibernate.dialect.MySQL8Dialect
+        format_sql: false
+        show_sql: false
+  sql:
+    init:
+      mode:
+        never
+weather:
+  api:
+    key: d62c6201admshf84c16886953dc1p13a0a1jsnc7384ff58637
+    host: weatherapi-com.p.rapidapi.com
+    city: Minsk
