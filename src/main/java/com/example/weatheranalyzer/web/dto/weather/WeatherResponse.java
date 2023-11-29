@@ -1,10 +1,15 @@
-package com.example.weatheranalyzer.web.dto;
+package com.example.weatheranalyzer.web.dto.weather;
 
+import com.example.weatheranalyzer.deserialization.LocalDateTimeDeserializer;
 import com.fasterxml.jackson.databind.ObjectMapper;
+import com.fasterxml.jackson.datatype.jsr310.JavaTimeModule;
 import lombok.Data;
 import org.springframework.http.ResponseEntity;
 
 import java.io.IOException;
+import java.text.ParseException;
+import java.time.LocalDateTime;
+import java.time.format.DateTimeFormatter;
 
 @Data
 public class WeatherResponse {
@@ -12,9 +17,17 @@ public class WeatherResponse {
     private Location location;
     private Current current;
 
-    public static WeatherDto mapFromResponse(ResponseEntity<String> response) throws IOException {
-        ObjectMapper mapper = new ObjectMapper();
-        WeatherResponse weatherResponse = mapper.readValue(response.getBody(), WeatherResponse.class);
+    public static WeatherDto mapFromResponse(ResponseEntity<String> response) throws IOException, ParseException {
+        ObjectMapper objectMapper = new ObjectMapper();
+        JavaTimeModule javaTimeModule = new JavaTimeModule();
+        DateTimeFormatter dateTimeFormatter = DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm");
+        javaTimeModule.addDeserializer(LocalDateTime.class, new LocalDateTimeDeserializer(dateTimeFormatter));
+        objectMapper.registerModule(javaTimeModule);
+        WeatherResponse weatherResponse = objectMapper.readValue(response.getBody(), WeatherResponse.class);
+        return getWeatherDto(weatherResponse);
+    }
+
+    private static WeatherDto getWeatherDto(WeatherResponse weatherResponse) {
         WeatherDto weatherDto = new WeatherDto();
         weatherDto.setTempC(weatherResponse.getCurrent().getTemp_c());
         weatherDto.setWindKph(weatherResponse.getCurrent().getWind_kph());
@@ -41,7 +54,7 @@ public class WeatherResponse {
     @Data
     public static class Current {
         private long last_updated_epoch;
-        private String last_updated;
+        private LocalDateTime last_updated;
         private double temp_c;
         private double temp_f;
         private int is_day;

@@ -3,6 +3,9 @@ package com.example.weatheranalyzer.domain.weather;
 import jakarta.persistence.*;
 import lombok.Data;
 
+import java.sql.Date;
+import java.time.LocalDateTime;
+
 @Entity
 @Table(name = "weather")
 @Data
@@ -30,5 +33,5 @@ public class Weather {
     private String location;
 
     @Column(name = "update_time", nullable = false)
-    private String updateTime;
+    private LocalDateTime updateTime;
 }

@@ -1,6 +1,9 @@
-package com.example.weatheranalyzer.web.dto;
+package com.example.weatheranalyzer.web.dto.weather;
 
 import lombok.Data;
+
+import java.time.LocalDateTime;
+import java.util.Date;
 
 @Data
 public class WeatherDto {
@@ -16,5 +19,5 @@ public class WeatherDto {
 
     private String location;
 
-    private String updateTime;
+    private LocalDateTime updateTime;
 }
