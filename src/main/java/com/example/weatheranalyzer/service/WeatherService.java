@@ -1,16 +1,16 @@
 package com.example.weatheranalyzer.service;
 
-import com.example.weatheranalyzer.web.dto.weather.WeatherDto;
+import com.example.weatheranalyzer.domain.exception.WeatherDataException;
+import com.example.weatheranalyzer.domain.weather.Weather;
 
 import java.io.IOException;
 import java.text.ParseException;
 import java.time.LocalDateTime;
-import java.util.Date;
 
 public interface WeatherService {
-    void getWeather() throws IOException, ParseException;
+    void getWeather() throws IOException, ParseException, WeatherDataException;
 
-    WeatherDto getActualWeather();
+    Weather getActualWeather();
 
-    WeatherDto getAverageWeather(LocalDateTime from, LocalDateTime to);
+    Weather getAverageWeather(LocalDateTime from, LocalDateTime to);
 }

@@ -1,9 +1,12 @@
 package com.example.weatheranalyzer.web.controller;
 
+import com.example.weatheranalyzer.domain.weather.Weather;
 import com.example.weatheranalyzer.service.WeatherService;
 import com.example.weatheranalyzer.web.dto.date.DateRangeRequest;
 import com.example.weatheranalyzer.web.dto.weather.WeatherDto;
+import com.example.weatheranalyzer.web.mapper.WeatherMapper;
 import lombok.RequiredArgsConstructor;
+import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
@@ -16,14 +19,22 @@ public class WeatherController {
 
     private final WeatherService weatherService;
 
+    private final WeatherMapper weatherMapper;
+
     @GetMapping("/actual")
-    public WeatherDto getActualWeather(){
-        return weatherService.getActualWeather();
+    public ResponseEntity<WeatherDto> getActualWeather(){
+        return ResponseEntity.ok().body(weatherMapper.toDto(weatherService.getActualWeather()));
     }
 
+
     @GetMapping("/average")
-    public WeatherDto getAverageWeather(@RequestBody DateRangeRequest dateRangeRequest){
-        return weatherService.getAverageWeather(dateRangeRequest.getFrom(), dateRangeRequest.getTo());
+    public ResponseEntity<?> getAverageWeather(@RequestBody DateRangeRequest dateRangeRequest) {
+        try {
+            return ResponseEntity.ok().body(weatherMapper.toDto(weatherService
+                    .getAverageWeather(dateRangeRequest.getFrom(), dateRangeRequest.getTo())));
+        } catch (IllegalArgumentException e) {
+            return ResponseEntity.badRequest().body("Invalid date range: " + e.getMessage());
+        }
     }
 
 }

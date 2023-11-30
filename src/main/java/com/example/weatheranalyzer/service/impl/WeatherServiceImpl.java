@@ -1,12 +1,14 @@
 package com.example.weatheranalyzer.service.impl;
 
+import com.example.weatheranalyzer.domain.exception.WeatherDataException;
 import com.example.weatheranalyzer.domain.weather.Weather;
 import com.example.weatheranalyzer.repository.WeatherRepository;
 import com.example.weatheranalyzer.service.WeatherService;
-import com.example.weatheranalyzer.web.dto.weather.WeatherDto;
 import com.example.weatheranalyzer.web.dto.weather.WeatherResponse;
-import com.example.weatheranalyzer.web.mapper.WeatherMapper;
+import jakarta.transaction.Transactional;
 import lombok.RequiredArgsConstructor;
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.http.HttpEntity;
 import org.springframework.http.HttpHeaders;
@@ -16,8 +18,6 @@ import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.stereotype.Service;
 import org.springframework.web.client.RestTemplate;
 
-import java.io.IOException;
-import java.text.ParseException;
 import java.time.LocalDateTime;
 import java.util.List;
 
@@ -25,8 +25,9 @@ import java.util.List;
 @RequiredArgsConstructor
 public class WeatherServiceImpl implements WeatherService {
 
+    private static final Logger LOGGER = LogManager.getLogger(WeatherServiceImpl.class);
+
     private final WeatherRepository weatherRepository;
-    private  final WeatherMapper weatherMapper;
 
     @Value("${weather.api.key}")
     private String apiKey;
@@ -38,59 +39,50 @@ public class WeatherServiceImpl implements WeatherService {
     private String city;
 
     @Override
+    @Transactional
     @Scheduled(fixedRate = 900000)
-    public void getWeather() throws IOException, ParseException {
-        String url = "https://weatherapi-com.p.rapidapi.com/current.json?q=" + city;
-        RestTemplate restTemplate = new RestTemplate();
-        HttpHeaders headers = new HttpHeaders();
-        headers.set("X-RapidAPI-Key", apiKey);
-        headers.set("X-RapidAPI-Host", apiHost);
-        HttpEntity<String> entity = new HttpEntity<>(headers);
-        ResponseEntity<String> response = restTemplate.exchange(url, HttpMethod.GET, entity, String.class);
-        WeatherDto weatherDto = WeatherResponse.mapFromResponse(response);
-        Weather weather = weatherMapper.toEntity(weatherDto);
-        weatherRepository.save(weather);
+    public void getWeather() throws WeatherDataException {
+        try {
+            String url = "https://weatherapi-com.p.rapidapi.com/current.json?q=" + city;
+            RestTemplate restTemplate = new RestTemplate();
+            HttpHeaders headers = new HttpHeaders();
+            headers.set("X-RapidAPI-Key", apiKey);
+            headers.set("X-RapidAPI-Host", apiHost);
+            HttpEntity<String> entity = new HttpEntity<>(headers);
+            ResponseEntity<String> response = restTemplate.exchange(url, HttpMethod.GET, entity, String.class);
+            Weather weather = WeatherResponse.mapFromResponse(response);
+            weatherRepository.save(weather);
+            LOGGER.debug("Weather saved in the database");
+        }catch (Exception e){
+            LOGGER.debug("Error when receiving weather data: " + e.getMessage());
+            throw new WeatherDataException("Error when receiving weather data: " + e.getMessage());
+        }
     }
 
     @Override
-    public WeatherDto getActualWeather() {
-        return weatherMapper.toDto(weatherRepository.findFirstByOrderByUpdateTimeDesc());
+    public Weather getActualWeather() {
+        return weatherRepository.findFirstByOrderByUpdateTimeDesc();
     }
 
     @Override
-    public WeatherDto getAverageWeather(LocalDateTime from, LocalDateTime to) {
+    public Weather getAverageWeather(LocalDateTime from, LocalDateTime to) {
         List<Weather> weatherList = weatherRepository.findAllWeatherFromRange(from, to);
-        int size = weatherList.size();
-        if (size == 0) {
-            return new WeatherDto();
+
+        if (weatherList.isEmpty()) {
+            return new Weather();
         }
-
-        double sumTempC = 0;
-        double sumWindKph = 0;
-        double sumPressureIn = 0;
-        double sumHumidity = 0;
-
-        for (Weather weather : weatherList) {
-            sumTempC += weather.getTempC();
-            sumWindKph += weather.getWindKph();
-            sumPressureIn += weather.getPressureIn();
-            sumHumidity += weather.getHumidity();
-        }
-
-
-
-        double averageTempC = Math.round(sumTempC / size * 100.0) / 100.0;
-        double averageWindKph = Math.round(sumWindKph / size * 100.0) / 100.0;
-        double averagePressureIn = Math.round(sumPressureIn / size * 100.0) / 100.0;
-        double averageHumidity = Math.round(sumHumidity / size * 100.0) / 100.0;
+        double averageTempC = weatherList.stream().mapToDouble(Weather::getTempC).average().orElse(0);
+        double averageWindKph = weatherList.stream().mapToDouble(Weather::getWindKph).average().orElse(0);
+        double averagePressureIn = weatherList.stream().mapToDouble(Weather::getPressureIn).average().orElse(0);
+        double averageHumidity = weatherList.stream().mapToDouble(Weather::getHumidity).average().orElse(0);
 
         Weather averageWeather = new Weather();
-        averageWeather.setTempC(averageTempC);
-        averageWeather.setWindKph(averageWindKph);
-        averageWeather.setPressureIn(averagePressureIn);
-        averageWeather.setHumidity(averageHumidity);
+        averageWeather.setTempC(Math.round(averageTempC * 100.0) / 100.0);
+        averageWeather.setWindKph(Math.round(averageWindKph * 100.0) / 100.0);
+        averageWeather.setPressureIn(Math.round(averagePressureIn * 100.0) / 100.0);
+        averageWeather.setHumidity(Math.round(averageHumidity * 100.0) / 100.0);
 
-        return weatherMapper.toDto(averageWeather);
+        return averageWeather;
     }
 
 }

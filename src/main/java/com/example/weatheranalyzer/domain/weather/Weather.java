@@ -1,7 +1,10 @@
 package com.example.weatheranalyzer.domain.weather;
 
 import jakarta.persistence.*;
+import lombok.AllArgsConstructor;
 import lombok.Data;
+import lombok.NoArgsConstructor;
+import lombok.RequiredArgsConstructor;
 
 import java.sql.Date;
 import java.time.LocalDateTime;
@@ -9,6 +12,8 @@ import java.time.LocalDateTime;
 @Entity
 @Table(name = "weather")
 @Data
+@RequiredArgsConstructor
+@AllArgsConstructor
 public class Weather {
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)

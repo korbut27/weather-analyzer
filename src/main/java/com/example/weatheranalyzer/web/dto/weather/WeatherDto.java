@@ -3,10 +3,10 @@ package com.example.weatheranalyzer.web.dto.weather;
 import lombok.Data;
 
 import java.time.LocalDateTime;
-import java.util.Date;
 
 @Data
 public class WeatherDto {
+
     private double tempC;
 
     private double windKph;
