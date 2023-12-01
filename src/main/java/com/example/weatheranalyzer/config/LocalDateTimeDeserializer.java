@@ -1,4 +1,4 @@
-package com.example.weatheranalyzer.deserialization;
+package com.example.weatheranalyzer.config;
 
 import com.fasterxml.jackson.core.JsonParser;
 import com.fasterxml.jackson.databind.DeserializationContext;

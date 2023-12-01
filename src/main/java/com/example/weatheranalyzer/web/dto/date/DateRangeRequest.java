@@ -1,6 +1,7 @@
 package com.example.weatheranalyzer.web.dto.date;
 
 import com.example.weatheranalyzer.service.impl.WeatherServiceImpl;
+import jakarta.validation.constraints.Pattern;
 import lombok.Data;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;

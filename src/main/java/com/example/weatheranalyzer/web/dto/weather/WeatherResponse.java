@@ -1,6 +1,6 @@
 package com.example.weatheranalyzer.web.dto.weather;
 
-import com.example.weatheranalyzer.deserialization.LocalDateTimeDeserializer;
+import com.example.weatheranalyzer.config.LocalDateTimeDeserializer;
 import com.example.weatheranalyzer.domain.weather.Weather;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.datatype.jsr310.JavaTimeModule;
