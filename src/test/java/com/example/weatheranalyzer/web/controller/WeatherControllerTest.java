@@ -1,5 +1,6 @@
 package com.example.weatheranalyzer.web.controller;
 
+import com.example.weatheranalyzer.domain.exception.InvalidDateRangeException;
 import com.example.weatheranalyzer.domain.weather.Weather;
 import com.example.weatheranalyzer.service.impl.WeatherServiceImpl;
 import com.example.weatheranalyzer.web.dto.date.DateRangeRequest;
@@ -14,10 +15,12 @@ import org.mockito.junit.jupiter.MockitoExtension;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 
-import java.text.ParseException;
+import java.time.LocalDate;
+import java.time.LocalDateTime;
+import java.time.ZoneId;
 import java.util.Date;
 
-import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.*;
 
 @ExtendWith(MockitoExtension.class)
 public class WeatherControllerTest {
@@ -51,37 +54,40 @@ public class WeatherControllerTest {
         assertEquals(weatherDto, response.getBody());
     }
 
-//    @Test
-//    public void testGetAverageWeather_ValidDateRange() throws ParseException {
-//        DateRangeRequest dateRangeRequest = new DateRangeRequest(from, to);
-//
-//        WeatherDto weatherDto = new WeatherDto();
-//        Weather weather = new Weather();
-//        weatherDto.setTempC(20.0);
-//        weatherDto.setWindKph(8.0);
-//
-//        Mockito.when(weatherService.getAverageWeather(Mockito.any(), Mockito.any())).thenReturn(weather);
-//
-//        Mockito.when(weatherMapper.toDto(Mockito.any())).thenReturn(weatherDto);
-//
-//        ResponseEntity<?> response = weatherController.getAverageWeather(dateRangeRequest);
-//
-//        assertEquals(HttpStatus.OK, response.getStatusCode());
-//        assertEquals(weatherDto, response.getBody());
-//    }
+    @Test
+    public void testGetAverageWeather_ValidDateRange() throws InvalidDateRangeException {
+        DateRangeRequest dateRangeRequest = new DateRangeRequest(from, to);
 
-//    @Test
-//    public void testGetAverageWeather_InvalidDateRange() {
-//        // Create a DateRangeRequest instance with invalid date range
-//        DateRangeRequest dateRangeRequest = new DateRangeRequest();
-//
-//        // Mock the behavior of weatherService.getAverageWeather() to throw IllegalArgumentException
-//
-//        // Call the controller method
-//        ResponseEntity<?> response = weatherController.getAverageWeather(dateRangeRequest);
-//
-//        // Assert the response
-//        assertEquals(HttpStatus.BAD_REQUEST, response.getStatusCode());
-//        assertEquals("Invalid date range: <error message>", response.getBody());
-//    }
+        WeatherDto weatherDto = new WeatherDto();
+        Weather weather = new Weather();
+        weatherDto.setTempC(20.0);
+        weatherDto.setWindKph(8.0);
+
+        Mockito.when(weatherService.getAverageWeather(Mockito.any(), Mockito.any())).thenReturn(weather);
+
+        Mockito.when(weatherMapper.toDto(Mockito.any())).thenReturn(weatherDto);
+
+        ResponseEntity<?> response = weatherController.getAverageWeather(dateRangeRequest);
+
+        assertEquals(HttpStatus.OK, response.getStatusCode());
+        assertEquals(weatherDto, response.getBody());
+    }
+
+    @Test
+    public void testGetAverageWeather_InvalidDateRange() {
+        LocalDate fromDate = LocalDate.of(2023, 11, 29);  // Earlier date
+        LocalDate toDate = LocalDate.of(2023, 11, 20);    // Later date
+
+        Date from = Date.from(fromDate.atStartOfDay(ZoneId.systemDefault()).toInstant());
+        Date to = Date.from(toDate.atStartOfDay(ZoneId.systemDefault()).toInstant());
+
+        try {
+            new DateRangeRequest(from, to);
+            fail("Expected IllegalArgumentException was not thrown");
+        } catch (InvalidDateRangeException ex) {
+            assertTrue(ex.getMessage().contains("'from' date cannot be greater than 'to' date"));
+        } catch (Exception e) {
+            fail("Unexpected exception was thrown: " + e.getClass().getName());
+        }
+    }
 }
